@@ -6,8 +6,8 @@
 (setenv "EMACS_ROOT" "~/.emacs.d/")
 (setq emacs-root (getenv "EMACS_ROOT"))
 (setq bookmark-default-file  "~/.emacs.d/bookmarks-archlinux")
-(defvar data-root "~/.emacs.d/data-root/"
-      "My data directory - the root of my dataspace.")
+(defvar data-root "~/.emacs.d/data-root/")
+;;      "My data directory - the root of my dataspace.")
 ;; ===============================================================================================================================
 ;; Init Preprocessing. Get from Hajime "init_preprocessing.el"
 ;; ============================================================
@@ -128,6 +128,7 @@
 (eval-after-load 'helm-files
   '(progn
      (define-key helm-find-files-map (kbd "M-r") (lambda() (interactive) (hajime-helm-action 'helm-open-dired)))
+     (define-key helm-find-files-map (kbd "M-l") 'my-backward-kill-word)
      (define-key helm-find-files-map (kbd "C-o") (lambda() (interactive) (hajime-helm-action 'helm-open-file-with-default-tool)))))
 
 ;; Turn off ido mode in case I enabled it accidentally
@@ -319,8 +320,44 @@
     ;; must save all bookmarks first.
     (add-hook 'kill-emacs-hook (lambda nil (bm-buffer-save-all) (bm-repository-save)))))
 
-;; =================================================================
+;; ===================================================================================================================================
+;; Delete word without copy to clipboard
+(defun my-forward-kill-word (arg)
+  "Delete characters forward until encountering the end of a word.
+With argument, do this that many times.
+This command does not push text to `kill-ring'."
+  (interactive "p")
+  (delete-region
+   (point)
+   (progn
+     (forward-word arg)
+     (point))))
 
+(defun my-backward-kill-word (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument, do this that many times.
+This command does not push text to `kill-ring'."
+  (interactive "p")
+  (my-forward-kill-word (- arg)))
+
+(defun my-delete-line ()
+  "Delete text from current position to end of line char.
+This command does not push text to `kill-ring'."
+  (interactive)
+  (delete-region
+   (point)
+   (progn (end-of-line 1) (point)))
+  (delete-char 1))
+
+(defun my-delete-line-backward ()
+  "Delete text between the beginning of the line to the cursor position.
+This command does not push text to `kill-ring'."
+  (interactive)
+  (let (p1 p2)
+    (setq p1 (point))
+    (beginning-of-line 1)
+    (setq p2 (point))
+    (delete-region p1 p2)))
 
 ;; ===================================================================================================================================
 (package-initialize)
@@ -361,7 +398,8 @@
 (global-set-key (kbd "M-n") 'forward-sentence)
 (global-set-key (kbd "M-a") 'beginning-of-buffer)
 (global-set-key (kbd "M-e") 'end-of-buffer)
-(global-set-key (kbd "M-l") 'backward-kill-word)
+(global-set-key (kbd "M-d") 'my-forward-kill-word)
+(global-set-key (kbd "M-l") 'my-backward-kill-word)
 (global-set-key (kbd "C-x c") 'ace-jump-char-mode)
 (global-set-key (kbd "<f3>") 'highlight-selected-region)
 (global-set-key (kbd "M-<f3>") 'highlight-symbol-remove-all)
@@ -384,10 +422,21 @@
 ;; Description: You need to use isearch by C-g, type the word you search
 ;;              and C-x w your cursor will jump to the word you select
 (custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ace-isearch-function (quote avy-goto-char))
  '(ace-isearch-input-length 7)
  '(ace-isearch-jump-delay 0.3)
- '(ace-isearch-function 'avy-goto-char)
- '(ace-isearch-use-jump 'printing-char))
+ '(ace-isearch-use-jump (quote printing-char))
+ '(package-archives
+   (quote
+    (("ELPA" . "http://tromey.com/elpa/")
+     ("SC" . "http://joseito.republika.pl/sunrise-commander/")
+     ("gnu" . "http://elpa.gnu.org/packages/")
+     ("marmalade" . "https://marmalade-repo.org/packages/")
+     ("melpa" . "http://melpa.org/packages/")))))
 
 (define-key isearch-mode-map (kbd "C-x w") 'ace-isearch-jump-during-isearch)
 
@@ -753,3 +802,9 @@ If the new path's directories does not exist, create them."
     (call-interactively 'shell)))
 (setq explicit-bash-args '("--login" "-i"))
 
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
